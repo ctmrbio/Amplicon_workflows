@@ -10,21 +10,19 @@ cover the whole amplicon, leaving a gap in the middle. To deal with this and oth
 developed this strategy for optimizing accuracy and efficiency of taxonomic assignment of environmental 18S reads, 
 based on the `PR2 database <http://ssu-rrna.org/>`_. 
 
-The first step is to blast each set of reads (forward and reverse) against a curated revision of the PR2 database. 
+The first step is to search each set of reads (forward and reverse) against a curated revision of the PR2 database. 
 While this database is very complete and thoroughly annotated, it includes in some cases ITS and 28S regions which
 can affect the accuracy of blasting. Therefore, it is best for the purposes of this workflow to use 
 `this curated subset <https://export.uppmax.uu.se/b2010008/projects-public/database/PR2_derep_3000bp.fasta>`_
 
 STEP 1
 --------
-Run Blast+ for each of your datasets, requiring a standard TSV output, for instance:
+Run vsearch for each of your datasets, requiring a standard TSV output, for instance:
 
-  makeblastdb -in PR2_derep_3000bp.fasta	 -dbtype nucl -out PR2
+  vsearch --usearch_global fwd.fasta -db PR2_derep_3000bp.fasta --blast6out fwd.blast.out --id 0.9 --maxaccepts 25
   
-  blastn -query fwd.fasta -db PR2 -out fwd.blast.out -evalue 0.01 -outfmt 6 -max_target_seqs 25
+  vsearch --usearch_global rev.fasta -db PR2_derep_3000bp.fasta --blast6out rev.blast.out --id 0.9 --maxaccepts 25
   
-  blastn -query rev.fasta -db PR2 -out rev.blast.out -evalue 0.01 -outfmt 6 -max_target_seqs 25
-
 STEP 2
 ------
 Parse each of the Blast+ output files at three levels of similiarity, corresponding to species (99%), genus (97%)
