@@ -1,9 +1,6 @@
 Processing amplicons with non-overlapping reads
 ===============================================
-
-This is a quick guide on how to use Usearch6 to go from fastq files all the way to a table of OTUs. More information can be found on the `Usearch project page, <http://www.drive5.com/usearch/manual/>`_. Also refer to this page for download and installation instructions. I'm going to assume in this manual that you can call Usearch simply by typing ./usearch6, but this depends on the folder where you have installed it, how you have called it and the folder you're in.
-
-This guide is based on Illumina MiSeq reads and Usearch 6.0.x and Usearch7. Please pay attention to use the right version at each step. It might be possible to replace Usearch6.0.x with Usearch 6.1.x and it might work with 5.x.x or older. All of the steps done in Usearch7 in this manual can be done with either Fastx or Usearch6. Don't try Fastx unless you already have it in your server.
+This is a quick guide on how to use Usearch7 to go from fastq files all the way to a table of OTUs. This is based chiefly on the programmes `FastQC <http://www.bioinformatics.babraham.ac.uk/projects/fastqc/>`_ and `Vsearch <https://github.com/torognes/vsearch>`_. Also refer to this page for download and installation instructions. I'm going to assume in this manual that you can call vsearch and cutadapt simply by typing the programme names, but this depends on the folder where you have installed it, how you have named it and the folder you're in.
 
 This guide is to be used if your forward and reverse reads do not overlap or if you're not sure if that's the case. If you know you have an overlap, please refer to the Usearch_overlap.pdf manual. If you're still planning your experiment, do your best to have an overlap.
 
@@ -13,51 +10,43 @@ This guide is to be used if your forward and reverse reads do not overlap or if 
 -------------------------------
 
 **STEP 1: Quality statistics**
-	In the next step, you will have to decide how many bases you want to cut off from the end of your reads, to simultaneously preserve as many bases as possible and guarantee the quality of your reads. Therefore, in this step, you simply get some statistics on quality. For this, you can use Usearch7, Fastx, FastQC and others. If using Usearch7, the statistics are explained at length `here <http://www.drive5.com/usearch/manual/fastq_stats.html>`_. For FastQC, `check here <http://www.bioinformatics.babraham.ac.uk/projects/fastqc/>`_.
+	In the next step, you will have to decide how many bases you want to cut off from the end of your reads, to simultaneously preserve as many bases as possible and guarantee the quality of your reads. Therefore, in this step, you simply get some statistics on quality. For this, you can use Usearch, Vsearch, Fastx, FastQC and others. If using Usearch7, the statistics are explained at length `here <http://www.drive5.com/usearch/manual/fastq_stats.html>`_. For FastQC, `check here <http://www.bioinformatics.babraham.ac.uk/projects/fastqc/>`_. FastQC produces an html report that should be opened on a browser.
 
 The command: 
-	./usearch7 -fastq_stats <infile> -log <outfile>
+	fastqc -o <output_directory> --noextract --nogroup <infiles>
 
 Example:
-	./usearch7 -fastq_stats reads_R1.fq -log reads_R1.stats
+	fastqc -o fastqc --noextract --nogroup file1_r1.fastq file1_R2.fastq file2_R1.fastq file2_R2.fastq
 
 
 **STEP 2. Quality trimming**
-	In this step, you cut off bases with low quality and trim all reads to the same length. You can use different lengths for the forward and reverse reads, but you should use the same cut-off for every sample you intend to compare. You can also choose to throw away sequences that have too low quality.
+	In this step, you cut off bases with low quality and trim all reads to the same length. You can use different lengths for the forward and reverse reads, but you should use the same cut-off for every sample you intend to compare. You can also choose to throw away sequences that have too low quality. These cutoffs should be decided based on your FastQC reports. We'll also remove our primer sequences.
 
 The command:
-	./usearch7 -fastq_filter <infile> -fastq_trunclen <cutoff> -fastq_maxee <max error number> -fastqout <outfile>
+	vsearch --fastq_filter <infile> --fastq_maxee_rate <max error rate per read> --fastq_stripleft <length of primer>  --fastq_trunclen <length to keep> --fastq_minlen <length to keep> --fastaout <output file>
 
 Example:
-	./usearch -fastq_filter reads_R1.fq -fastq_trunclen 280 -fastq_maxee 4 -fastqout reads_R1.trim.fq
+	vsearch --fastq_filter file1_R1.fastq --fastq_maxee_rate 0.01 --fastq_stripleft 18 --fastq_trunclen 270 --fastq_minlen 270 --fastaout reads1_R1.fa
 
-	./usearch -fastq_filter reads_R2.fq -fastq_trunclen 250 -fastq_maxee 4 -fastqout reads_R2.trim.fq
+	
+	vsearch --fastq_filter file1_R2.fastq --fastq_maxee_rate 0.01 --fastq_stripleft 18 --fastq_trunclen 270 --fastq_minlen 270 --fastaout reads1_R2.fa
 
-
-**STEP 3: Converting to fasta**
-	After the trimming is done, we no longer need the quality information.
+**STEP 3: Synchronizing files**
+	After the trimming is done, we might have discarded some forward or reverse reads and not their partners. At this point, we correct this problem with a custom script. It selects the output file name automatically by adding the suffix "sync"
 
 The comand:
-	grep '^@HWI' <infile> -A1 --no-group-separator | sed 's/@/>/' > <outfile>
+	perl resync_fastx.pl --file1=<fwd_fasta> --file2=<rev_fasta> > <output_fasta>
 
 Example:
-	grep '^@HWI' reads_R1.fq -A1 --no-group-separator | sed 's/@/>/' > reads_R1.fa
-
-If this doesn't work (are you working on a Mac?) try:
-	grep '^@HWI' reads_R1.fq -A1 | grep -v '^--$' | sed 's/@/>/' > reads_R1.fa
+	perl resync_fastx.pl --file1=reads1_R1.fa --file2=reads1_R2.fasta
 
 **STEP 4: Concatenating reads**
 	In this step we will concatenate the forward and reverse reads into a single artificial amplicon. You can include a separator between them, so they can be split later. Due to downstream applications, this separator can only contain the letters A, C, T, G, N. Keep in mind that the spacer you choose should be rare (long) enough that it's not likely to appear at random in your reads. However, if your forward reads have all been trimmed to the same size, you can skip the spacer and do the splitting based on length. Notice that the outfile names are defined automatically; this will be changed soon.
 
 The command:
-	perl cat_reads --spacer=<spacer_string> --revcom --file1=<forwad_reads> --file2=<reverse_reads>
-or
-	perl cat_reads --revcom --file1=<forward_reads> --file2=<reverse_reads>
-
+	perl cat_reads --revcom --file1=<forward_reads> --file2=<reverse_reads> > <output_file>
 
 Example
-	perl cat_reads --spacer=NNNNNNNN --revcom --file1=reads_R1.fa --file2=reads_R2.fa > reads_cat.fa
-or
 	perl cat_reads --revcom --file1=reads_R1.fa --file2=reads_R2.fa > reads_cat.fa
 
 *PART II: CLUSTERING*
@@ -73,118 +62,115 @@ Example:
 	cat reads1.fa reads2.fa reads3.fa > all.fa
 
 **STEP 6: Dereplication**
-	Here we combine all reads that are identical into a single one, keeping track of how many copies there are of each one. This saves a lot of time down the road.
-
-The command:
-	./usearch7 -derep_fulllength <infile> -output <fasta_file> -uc <uc_file> -sizeout
-
-Example:
-	./usearch7-derep_fulllength all.fa -output all.derep.fa -uc all.derep.uc -sizeout
-
-
-**STEP 7: Sorting**
-	Usearch reads the fasta file in order, assigning each sequence to a cluster as it finds it. Since a sequence that has been read in many copies is most likely to be right, starting by the most frequent sequences and working your way down increases the chances the OTU found are real. We will therefore sort sequences from most frequent to least. At this point you can also throw away sequences that haven't been found a minimal amount of times. Discarding singletons will increase your precision and speed up the process, with a small lost of sensitivity. If you choose not to throw away any sequences, don't write the parameter -minsize.
-
-The command:
-	./usearch7 -sortbysize <infile> -output <outfile> -minsize <minimal cluster size>
-
-Example:
-	./usearch7 -sortbysize all.derep.fa -output all.sort.fa -minsize 2
-
-
-**STEP 8: Clustering**
-	Here we cluster our reads by similarity. Usearch uses average-linkage clustering, which means that it is possible that two sequences that are closer to each other than the similarity threshold can still end up in different OTU. One way to minimize this risk is to cluster at a higher similarity first, and then gradually expand these clusters.
-	Since we have not removed the primer sequences, we will tell Usearch to not consider them in the clustering.
-	If you're having memory problems, you can use -cluster_smallmem instead of cluster_fast. This is slightly less accurate. 
-
-The command:
-	./usearch6 -cluster_smallmem <infile> -id <identity> -uc <uc_file> -idprefix <integer> -idsuffix <integer> --centroids <fasta output>
-
-Example:
-	./usearch6 -cluster_smallmem all.sort.fa -id 0.99 -uc all.99.uc -idprefix 18 -idsuffix 18 –centroids all.99.fa -sizein -sizeout
-
-	./usearch6 -cluster_smallmem all.99.fa -id 0.98 -uc all.98.uc -idprefix 18 -idsuffix 18 –centroids all.98.fa -sizein -sizeout
-
-	./usearch6 -cluster_smallmem all.98.fa -id 0.97 -uc all.97.uc -idprefix 18 -idsuffix 18 –centroids all.97.fa -sizein -sizeout
-
-
-
-**STEP 9: Renaming OTU**
-	Our OTU so far have the name of the read ID of their centroid, which is simply not pleasant. Therefore, we can change their names now to OTU_1, OTU_2 etc. This script can be downloaded `here <http://drive5.com/python/>`_. You can choose any name for your OTUs, but please use OTU_ if you want to keep following this tutorial.
-
-The command:
-	python fasta_number.py <infile> <prefix> > <outfile>
-
-Example:
-	python fasta_number.py otus97.fa OTU_ > otus97num.fa
-
-**STEP 10: Assigning reads to OTU**
-	We will now look at each of our original fasta files and assign them to OTU. At this point, take the opportunity to make a directory just for your new cluster files. This is important downstream. You're also requested to say how similar your sample must be to the centroid. This must be compatible with the radius you used for clustering. For example, if you used a radius of 3%, use now a similarity of 0.97.
-
-	In this step you may see that most reads are identified as chimera and just a small part are being recruited to OTU. That's a bug in the screen output that won't affect your data.
+	Here we combine all reads that are identical into a single one, keeping track of how many copies there are of each one. We'll also discard sequences that only show up once in the entire dataset, as they're very likely to be errors. This saves a lot of time down the road. We'll also give our OTU a better name than the standard read names.
 
 The command:
 
-	./usearch7 -usearch_global <sample file> -db <numbered out file> -strand <plus/minus/both> -id <similarity to the centroid> -uc <outfile>
-
-Example:
-
-	./usearch7 -usearch_global reads1.merge.fa -db otus97.num.fa -strand both -id 0.97 -uc 	clusters/reads1.uc
+	vsearch -derep_fulllength <infile> -output <outfile> -minuniquesize <minimal abundance> --relabel <label>
 	
-Or, to run all samples without having to retype the command each time:
+Example
 
-	SAMPLES=reads*merge.fa
-	for sample in $SAMPLES; do
-		./usearch7 -usearch_global $sample -db otus97.num.fa -strand both -id 0.97 -uc clusters/${file%merge.fa}uc
-	done
+	vsearch -derep_fulllength all.fa -output uniques.fa -minuniquesize 1 --relabel OTU-
 
 
-**STEP 11: Splitting the concatenated reads**
+**STEP 6: Clustering**
+	Here we cluster our reads by similarity. Usearch uses average-linkage clustering, which means that it is possible that two sequences that are closer to each other than the similarity threshold can still end up in different OTU. One way to minimize this risk is to cluster at a higher similarity first, and then gradually expand these clusters.
+	If you're having memory problems, you can use -cluster_smallmem instead of cluster_fast. This is slightly less accurate, and will require that you sort your sequences by length before clustering. 
+
+The command:
+	vsearch -cluster_smallmem <infile> -id <identity> -uc <uc_file> -idprefix <integer> -idsuffix <integer> --centroids <fasta output>
+
+Example:
+	vsearch -cluster_smallmem uniques.fa -id 0.99 -uc all.99.uc –centroids all.99.fa 
+
+	vsearch -cluster_smallmem uniques.fa -id 0.98 -uc all.98.uc –centroids all.98.fa 
+
+
+**STEP 7: Assigning reads to OTU**
+	We will now look at each of our merged fastq files and assign them to OTU. At this point, take the opportunity to make a directory just for your new cluster files. This is important downstream. You're also requested to say how similar your sample must be to the centroid. This must be compatible with the similarity you used for clustering.
+
+The command:
+
+	vsearch -usearch_global <sample file> -db <numbered out file> -strand <plus/both> -id <similarity to the centroid> -uc <outfile>
+
+Example:
+
+	vsearch -usearch_global merge.fq -db all.98.fa -strand plus -id 0.98 -uc clusters/reads1.uc
+
+
+
+**STEP 8: Splitting the concatenated reads**
 	Now that we've assigned the reads to OTU, we have to split them again to be able to assign them a taxonomy. 
 
 The command:
-	perl uncat_reads --spacer=<spacer_string> --in=<infile> --out1=<fwd_file> --out2=<rev_file>
-or	
-	perl uncat_reads --length=<length> --in=<infile> --out1=<fwd_file> --out2=<rev_file>
+	perl uncat_reads.pl --length=<length> --in=<infile> --out1=<fwd_file> --out2=<rev_file>
 
 Example:
-	perl uncat_reads --spacer='NNNNNNN' --in=otus97.num.fa --out1=otus97_R1.fa --out2=otus97_R2.fa
-or
-	perl uncat_reads --length=220 --in=otus97.num.fa --out1=otus97_R1.fa --out2=otus97_R2.fa
+	perl uncat_reads.pl --length=252 --in=all.98.fa --out1=all98_R1.fa --out2=all98_R2.fa
 
 *PART III: CLASSIFYING*
 -----------------------
 
 **If you're working on 18S reads:**
-Please refer to the `18S taxonomy workflow <https://github.com/EnvGen/Tutorials/blob/master/18S_taxonomy.rst>`_ and then proceed to Part IV here. Otherwise, follow Steps 12 and 13 as described below.
+Please refer to the `18S taxonomy workflow <https://github.com/EnvGen/Tutorials/blob/master/18S_taxonomy.rst>`_ and then proceed to Part IV here. Otherwise, follow Steps 9 and 10 as described below.
 
 
-**STEP 12: Classifying OTU**
+**STEP 9: Classifying OTU**
 	There are many tools for assigning taxonomy to a read. Here we use the `SINA classifier <http://www.arb-silva.de/aligner/>`_. Its online version only accepts 1000 sequences at a time. You can choose to divide your file into chunks of 1000 sequences, and then concatenate the results, or you can download and run the SINA classifier locally.
 
 
-**STEP 13: Parsing taxonomy**
+**STEP 10: Parsing taxonomy**
 	The taxonomy assigned to a forward read won't always agree with the reverse read. What we do here is to take the part in which both agree.
 
 The command:
-	sina2otu --pair --sina=<sina_csv_table> --sina2=<sina_csv_table> > <outfile>
+	perl sina2otu.pl --pair --sina=<sina_csv_table> --sina2=<sina_csv_table> > <outfile>
 
 Example:
-	sina2otu --pair --sina=all_R1.97.csv –sina2=all_R2.97.csv > all.97.tsv
+	perl sina2otu.pl --pair --sina=all_R1.97.csv –sina2=all_R2.97.csv > all.97.tsv
 
 *PART IV: OTU TABLES*
 -----------------------
-**STEP 14: Creating an OTU table**
-	Independently of the classification method chosen above, this step will produce a table with OTUS on the lines, samples on the columns and the classification for each read and the sequence of the representative at the end of each line. You can choose to stop the taxonomy at a certain level – default is 5, or approximately class. If you want the full taxonomy, set the –depth parameter to a very large number.
-	Since we have already created an artificial consensus from both our classifications, we need to inform the parser of this by choosing "tsv" as format.
-	Every classification file that you want included in your OTU table should be in the same folder, and no other files should be in it. The same applies to the read assignment files (uc files), that should be in their own folder, and with nothing else there.
 
+**STEP 11: Making OTU tables**
+	Here we'll produce a table with OTUS on the lines, samples on the columns and the classification for each read and the sequence of the representative at the end of each line.
+
+	If you use the RDP classifier, you can choose a confidence cut-off – classification assignments with lower confidence will be disregarded. Regardless of the classifier you also have the choice of assigning a fixed depth of classification, and all finer classifications will be disregarded. If you want the whole classification without any cut-offs, choose 0 as minimal confidence and a large number as maximum depth. If you don't give any parameters, a cut-off of 50% confidence will be taken for RDP files and a depth of 5 for Silva files.
+
+	With online SINA you can choose different databases to use (EMBL, Greengenes, LTP, RDP and Silva, in this order). This script will only consider the last classification for each line, so consider that when choosing which databases to use.
+
+	In all cases, you must choose which classifier was used: RDP (rdp), online SINA (sina-ol), standalone sina (sina-cl) or any other procedure generating a table with OTU on the leftmost column and classification on the rightmost (tsv). Choose tsv if you follwed the 18S taxonomy procedure.
+	
+	Every classification file that you want included in your OTU table should be in the same folder, and no other files should be in it.
+	
+	You also have the option of inputing sequence names at this step, if you don't want to use the file names as column headers in the results table.
 
 The command:
-	perl otu_tables --depth=<INTEGER> --samples=<FOLDER> --classification=<SINA_FILE> --sequences=<FASTA> --classifier=tsv
+
+	perl make_otu_tables.pl --names=<FILE> --threshold=INTEGER --samples=<FOLDER> --classification=<RDP_FILE> --sequences=<FASTA> --classifier=<classifier> > <output_file>
+
+or
+
+	perl make_otu_tables.pl --depth=INTEGER --samples=<FOLDER> --classification=<SINA_FILE> --sequences=<FASTA> --classifier=<sina-cl/sina-ol> > <output_file>
+
 
 Example:
-	perl otu_tables --depth=10 --samples=clusters --classification=otus97.csv --sequences=otus97.num.fa --classifier=tsv
+
+	perl make_otu_tables.pl --threshold=50 –samples=all_reads --classification=otus97.num.fa_classified.txt --sequences=otus97.num.fa --classifier=rdp > otu_table.tsv
+
+or
+
+	perl make_otu_tables.pl --depth=5 --samples=all_reads --classification=otus97.csv --sequences=otus97.num.fa --classifier=sina-ol --names=names.tsv > otu_table.tsv
+
+**STEP 12: Elimiating 0 count OTUs**
+	During assignment with usearch_global, some OTU that had been predicted earlier might end up with no reads assigned to them, since other OTU centroids had better matches to those reads. These make your OTU tables unnecessarily large, so you can eliminate them. The same approach can be used if you want to eliminate singletons at this step, for instance. We'll take the opportunity to fix a litte problem with the header line.
+	
+The command:
+
+	awk 'NR>1{for(i=2;i<=(NF-2);i++) t+=$i; if(t>0){print $0}; t=0}' otu_table.tsv > temp
+	
+	sed '1s/ /\\t/g'  temp > otu_table.tsv
+	
+	rm temp
 
 *PART V: BIOLOGY*
 -----------------
