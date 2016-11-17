@@ -6,7 +6,7 @@ otu_tables
 
 =head1 SYNOPSIS
 
-	otu_tables [--help] [--verbose] [--threshold=INTEGER] [--depth=INTEGER] [--names=<FILE>]--classifier=<sina/rdp> --samples=<FOLDER> --classification=<FILE> --sequences=<FASTA>
+	make_otu_tables [--help] [--verbose] [--threshold=INTEGER] [--depth=INTEGER] [--names=<FILE>]--classifier=<sina/rdp> --samples=<FOLDER> --classification=<FILE> --sequences=<FASTA>
 
 
 		--samples: folder containing the -usearch_global output for each sample to be analysed,
