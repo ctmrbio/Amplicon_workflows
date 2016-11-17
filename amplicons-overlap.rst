@@ -141,3 +141,15 @@ The command:
 	sed '1s/ /\\t/g'  temp > otu_table.tsv
 	
 	rm temp
+	
+*PART V: BIOLOGY*
+-----------------
+It's beyond the scope of this tutorial to teach you how to draw biological conclusions from your OTU table. However, here are some useful links:
+
+For visualizing your data in interactive hierarchical pie charts, use `Krona <http://sourceforge.net/p/krona/home/krona/>`_.
+
+For information and tutorials on statistical methods for analysis of microbial ecology, take a look at `Gustame <https://sites.google.com/site/mb3gustame/home>`_.
+
+If you believe that there are interesting OTU that are worth looking deeper into for their specific ecology, consider `oligotyping <http://merenlab.org/projects/oligotyping/>`_.
+
+If you're working with 16S in a well-characterized environments, such as the human microbiome, you can also consider `PiCrust <http://picrust.github.io/picrust/>`_ This repo also contains a guide on how to combine this approach with a PiCrust analysis.
