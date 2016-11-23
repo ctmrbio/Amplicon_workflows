@@ -146,7 +146,7 @@ The command:
 -----------------
 It's beyond the scope of this tutorial to teach you how to draw biological conclusions from your OTU table. However, here are some useful links:
 
-For visualizing your data in interactive hierarchical pie charts, use `Krona <http://sourceforge.net/p/krona/home/krona/>`_.
+For visualizing your data in interactive hierarchical pie charts, use `Krona <http://sourceforge.net/p/krona/home/krona/>`_. For converting the OTU table you made here into a krona compatible input, use the script tsv2krona.py found in this repo and the ktImportText tool from krona.
 
 For information and tutorials on statistical methods for analysis of microbial ecology, take a look at `Gustame <https://sites.google.com/site/mb3gustame/home>`_.
 
