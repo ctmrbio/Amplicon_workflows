@@ -50,7 +50,7 @@ It's important to have a directory only for the mapping results.
 
   ~/picrust-1.1.0/scripts/predict_metagenomes.py -i norm_table.biom -o metagenome.biom
 
-  biom convert -i  metagenome.biom -o metagenomes.tsv --to-tsv
+  biom convert -i  metagenome.biom -o metagenome.tsv --to-tsv
 
 **OBS:** If you get an error at normalize_by_copy_number.py, run instead
   biom convert -i pi_table.tsv -o pi_table.biom --to-json
@@ -58,6 +58,13 @@ It's important to have a directory only for the mapping results.
   ~/picrust-1.1.0/scripts/normalize_by_copy_number.py -i pi_table.biom -o norm_table.biom
  
  and then proceed to the next steps
+ 
+ **STEP 5: Remove 0 counts**
+ As a standard, PiCRUST outputs every kegg in its database, including ones with no hits in the dataset. To get rid of that, as well as the annoying header line, run the following commands:
+ 
+ cat <(head -n2 metagenome.tsv | tail -n1) <(awk 'NR>1{for(i=3;i<=NF;i++) t+=$i; if(t>0){print $0}; t=0}' metagenome.tsv) | sed 's/ /_/g' > temp
+ mv temp metagenome.tsv
+ 
  
 
 
