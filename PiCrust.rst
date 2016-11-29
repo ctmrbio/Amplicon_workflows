@@ -2,9 +2,9 @@ Combining picrust with a vsearch-based approach
 ===============================================
 
 `PiCrust <http://picrust.github.io/picrust/>`_ is a good piece of software for predicting the functional profiles of 
-_bacterial_ communities, based on _16S sequencing_, if _most species in the environment are known_. If any of these 
+_bacterial_ communities, based on *16S sequencing*, if *most species* in the environment are *known*. If any of these 
 criteria doesn't apply to your samples (if you used a different gene, if eukaryotes are important, or if >30% of your sequences
-don't match to the `Greengenes <http://greengenes.secondgenome.com/downloads>`_ database, I can't recommend this approach.
+doesn't match to the `Greengenes <http://greengenes.secondgenome.com/downloads>`_ database, I can't recommend this approach).
 
 Start by installing PiCrust and the associated libraries as explained `here <picrust.github.io/picrust/install.html>`_.
 
