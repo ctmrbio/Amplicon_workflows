@@ -95,8 +95,24 @@ Example:
 	vsearch -usearch_global merge.fq -db centroids.fa -strand plus -id 0.98 -uc clusters/reads1.uc --query_cov 1
 
 
-**STEP 8: Classifying OTU**
-	The classification approach used here was first developed by `Yue O. O. Hu <>`_ for 18S assignment and then adapted here for 16S as well. It requires highly curated databases, and for that a curated version of the `PR2 database <>`_ for protists and of the `SILVA 129 database <>`_ for bacteria and archaea can be used.
+**STEP 8: Mapping OTU to a curated database**
+	The classification approach used here was first developed by `Yue O. O. Hu <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4864665/>`_ for 18S assignment, and then rewritten in Python and adapted for 16S here. It requires highly curated databases, and for that a curated version of the `PR2 database <http://ssu-rrna.org/>`_ for protists and of the `SILVA database <https://www.arb-silva.de/download/arb-files/>`_ for bacteria and archaea can be used. Use the following download links:
+	
++---------+---------------------------------+-------------------------------------+
+|**16S**  |`SILVA 128 release`_             | `Curated SILVA 128 taxonomy table`_ |
++---------+---------------------------------+-------------------------------------+
+|**18S**  |`Curated PR2 databse`_           | `PR2 taxonomy table`_               |
++---------+---------------------------------+-------------------------------------+
+
+
+.. _`SILVA 128 release`:  https://www.arb-silva.de/fileadmin/silva_databases/release_128/Exports/SILVA_128_SSURef_Nr99_tax_silva_trunc.fasta.gz
+.. _`Curated SILVA 128 taxonomy table`: https://export.uppmax.uu.se/b2016371/public/database/silva_128_Nr99_no-euk_curated.tsv
+.. _`Curated PR2 databse`: https://export.uppmax.uu.se/b2010008/projects-public/database/PR2_derep_3000bp.fasta
+.. _`PR2 taxonomy table`: https://export.uppmax.uu.se/b2010008/projects-public/database/PR2_derep_3000bp.tax.txt
+
+
+
+	If you have good reason to use SINA or the RDP classifier, this can also be adapted into this workflow. In this case, please refer to `this older workflow <https://github.com/EnvGen/Tutorials/blob/master/amplicons-overlap.rst`_ and follow steps 12-14.
 	
 	
 **STEP 9: Creating an OTU table**
