@@ -1,10 +1,11 @@
 Processing amplicons with overlapping reads
 ===========================================
 
-
 This is a quick guide on how to use Usearch to go from fastq files all the way to a table of OTUs. This is based chiefly on the programmes `Usearch <http://drive5.com/usearch/>`_, `Vsearch <https://github.com/torognes/vsearch>`_  and `Cutadapt <https://github.com/marcelm/cutadapt>`_. Also refer to those pages for download and installation instructions. Vsearch and Usearch are very similar pieces of software and most steps can be performed equally well with one or the other, but some functionalities are exclusive to one of them, and both are needed. I'm going to assume in this workflow that you can call usearch, vsearch and cutadapt simply by typing the programme names, but this depends on the folder where you have installed it, how you have named it and the folder you're in.
 
 I'm also assuming you have overlapping reads, that is, that your forward and reverse reads overlap each other in the 5'-end. If this is not the case, or if you're not sure, please refer to the amplicons_no-overlap manual.
+
+Finally, notice you'll need both biopython and bioperl.
 
 *Part I: filtering and merging*
 -------------------------------
@@ -28,7 +29,7 @@ The command:
 
 	usearch -fastq_mergepairs <forward_reads> -reverse <reverse_reads> -fastq_maxdiffs <maximum number of different bases> -fastqout <outfile>
 
-Example
+Example:
 
 	usearch -fastq_mergepairs trimmed_1.fq -reverse trimmed_2.fq -fastq_maxdiffs 4 -fastqout merge.fq
 
@@ -51,11 +52,11 @@ Example:
 **STEP 4: Sample concatenation**
 	In most applications, you want to compare communities from different environments, conditions etc. For this, you have to have the same OTU defined for all samples. Therefore, at this point we concatenate all files.
 
-The command
+The command:
 
 	cat <all_fasta_files> > <outfile>
 
-Example
+Example:
 
 	cat filtr1.fa filtr2.fa filtr3.fa > all.fa
 
@@ -66,10 +67,9 @@ The command:
 
 	vsearch -derep_fulllength <infile> -output <outfile> -minuniquesize <minimal abundance> --relabel <label>
 	
-Example
+Example:
 
 	vsearch -derep_fulllength all.fa -output uniques.fa -minuniquesize 2 --relabel OTU-
-
 
 
 **STEP 6: OTU picking**
@@ -94,6 +94,8 @@ Example:
 
 	vsearch -usearch_global merge.fq -db centroids.fa -strand plus -id 0.98 -uc clusters/reads1.uc --query_cov 1
 
+*Part III: Taxonomy assignment*
+-------------------------------
 
 **STEP 8: Mapping OTU to a curated database**
 	The classification approach used here was first developed by `Yue O. O. Hu <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4864665/>`_ for 18S assignment, and then rewritten in Python and adapted for 16S here. It requires highly curated databases, and for that a curated version of the `PR2 database <http://ssu-rrna.org/>`_ for protists and of the `SILVA database <https://www.arb-silva.de/download/arb-files/>`_ for bacteria and archaea can be used. Use the following download links:
@@ -111,42 +113,63 @@ Example:
 .. _`PR2 taxonomy table`: https://export.uppmax.uu.se/b2010008/projects-public/database/PR2_derep_3000bp.tax.txt
 
 
+Use vsearch to map your amplicons to the database as fast as Usearch would, but produce a blast-like output.
+	
+The command:
+	
+	vsearch --usearch_global <infile> -db <database> --blast6out <output> --id <minimal ID for a phylum-level assignemt> --maxaccepts <maximum number of top hits to keep>
 
-	If you have good reason to use SINA or the RDP classifier, this can also be adapted into this workflow. In this case, please refer to `this older workflow <https://github.com/EnvGen/Tutorials/blob/master/amplicons-overlap.rst`_ and follow steps 12-14.
+Example:
+
+	vsearch --usearch_global centroids.fa -db SILVA_128_SSURef_Nr99_tax_silva_trunc.fasta --blast6out centroids2silva.blast --id 0.9 --maxaccepts 45
+
+If you have good reason to use SINA or the RDP classifier instead of this approach, please refer to `this older workflow <https://github.com/EnvGen/Tutorials/blob/master/amplicons-overlap.rst`_ and follow steps 12-14.
 	
+**STEP 9: Parsing the taxonomy**
+	The trick here is that we'll parse the same mapping result att diferent levels of similarity and keep the best classification possible for the level of similarity found. The similarity levels presented here work well in our experience, but they're not universal for all clades. Specific research questions might require optimizing them.
 	
-**STEP 9: Creating an OTU table**
+The code:
+
+	SIMS=<similarity levels>
+	for sim in ${SIMS[@]}; do
+	
+      		python taxonomy_blast_parser.py -1 <output> -2 <output> -id $sim -tax <taxonomy DB> -l1 <length of amplicon> -l2 <length of amplicon> > parse.${sim}.out
+	done
+	
+	python combine_taxonomy.py -i <output files separated by comma> -n <taxonomy level they correspond to> -d <depth of taxonomy to consider for each level> > <output>
+	
+Example:
+
+	SIMS=(90 95 97 99 100)
+	for sim in ${SIMS[@]}; do
+        	python taxonomy_blast_parser.py -1 blast.$sim.out -2 blast.$sim.out -id $sim -tax silva_128_Nr99_no-euk_curated.tsv -l1 350 -l2 350 > parse.${sim}.out
+	done
+	
+	python combine_taxonomy.py -i parse.100.out,parse.99.out,parse.97.out,parse.95.out,parse.90.out -n strain,species,genus,class,phylum -d 8,7,6,3,2 > taxonomy.out
+
+
+*PART IV: BUILDING A TABLE*
+-----------------
+
+**STEP 10: Creating an OTU table**
 .....
 
 The command:
 
-	perl make_otu_tables.pl --names=<FILE> --threshold=INTEGER --samples=<FOLDER> --classification=<RDP_FILE> --sequences=<FASTA> --classifier=<classifier> > <output_file>
-
-or
-
-	perl make_otu_tables.pl --depth=INTEGER --samples=<FOLDER> --classification=<SINA_FILE> --sequences=<FASTA> --classifier=<sina-cl/sina-ol> > <output_file>
-
+	perl make_otu_tables.pl --names=<FILE> --samples=<FOLDER> --classification=<RDP_FILE> --sequences=<FASTA> --classifier=tsv > temp
 
 Example:
 
-	perl make_otu_tables.pl --threshold=50 –samples=all_reads --classification=otus97.num.fa_classified.txt --sequences=otus97.num.fa --classifier=rdp > otu_table.tsv
+	perl make_otu_tables.pl --samples=clusters/ --classification=taxonomy.out --sequences=centroids.fa --classifier=tsv > temp
 
-or
-
-	perl make_otu_tables.pl --depth=5 --samples=all_reads --classification=otus97.csv --sequences=otus97.num.fa --classifier=sina-ol --names=names.tsv > otu_table.tsv
-
-**STEP 10: Elimiating 0 count OTUs**
+**STEP 10: Eliminating 0 count OTUs**
 	During assignment with usearch_global, some OTU that had been predicted earlier might end up with no reads assigned to them, since other OTU centroids had better matches to those reads. These make your OTU tables unnecessarily large, so you can eliminate them. The same approach can be used if you want to eliminate singletons at this step, for instance. We'll take the opportunity to fix a litte problem with the header line.
 	
 The command:
 
-	awk 'NR>1{for(i=2;i<=(NF-2);i++) t+=$i; if(t>0){print $0}; t=0}' otu_table.tsv > temp
-	
-	sed '1s/ /\\t/g'  temp > otu_table.tsv
+	awk 'NR>1{for(i=2;i<=(NF-2);i++) t+=$i; if(t>0){print $0}; t=0}' temp | sed '1s/ /\\t/g' > otu_table.tsv
 	
 	rm temp
-	
-	
 
 	
 *PART V: BIOLOGY*
