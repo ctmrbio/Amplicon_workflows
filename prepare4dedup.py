@@ -17,24 +17,26 @@ __email__ = "luisa.hugerth@scilifelab.se"
 def parse_tab(infile, field1, fieldZ, seqfield):
 	count_dict = defaultdict(dict)
 	centroids = dict()
+	maxi=0
 	with open(infile) as csvfile:
 		reader = csv.reader(csvfile, delimiter="\t")
 		for row in reader:
-			if (int(fieldZ) == -1):
-				fieldZ = len(row)
+			if (int(fieldZ) == -3):
+				fieldZ = len(row)-2
 			if row[0][0] == '#':
-				names = row[field1:fieldZ+1]
+				names = row[field1:fieldZ]
 			else:
 				otu_id = row[0]
-				line = row[field1:fieldZ+1]
+				line = row[field1:fieldZ]
 				i = 0
 				for field in line:
 					if int(field) > 0:
 						count_dict[otu_id][names[i]] = field
-						i += 1				
+						if i > maxi:
+							maxi = i
+					i += 1
 				centroid = row[seqfield]
 				centroids[otu_id] = centroid
-
 	return (count_dict, names, centroids)
 
 
