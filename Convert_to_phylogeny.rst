@@ -3,15 +3,23 @@ We will therefore only give one example of usage, but the user can refer to the 
 to adjust it to their use case.
 
 Tools you'll need to set up a new reference library:
- * Seqmagik
- * FastTree or another tree building algorithm
- * Taxtastic
- * (Optional) Degeprime
+ * Seqmagick_
+ * FastTree_ or another tree building algorithm
+ * Taxtastic_
+ * (Optional) Degeprime_
 
 Tools you'll need for running each new sample batch:
- * ClustalO or another multiple sequence aligner
- * Pplacer
- * Guppy
+ * ClustalO_ or another multiple sequence aligner
+ * Pplacer_
+ * Guppy_
+ 
+.. _Seqmagick: http://seqmagick.readthedocs.io/en/latest/
+.. _FastTree: http://www.microbesonline.org/fasttree/
+.. _Taxtastic: https://pypi.python.org/pypi/taxtastic
+.. _Degeprime: https://github.com/envgen/DEGEPRIME
+.. _ClustalO: http://www.clustal.org/omega/
+.. _Pplacer: https://matsen.github.io/pplacer/generated_rst/pplacer.html
+.. _Guppy: https://matsen.github.io/pplacer/generated_rst/guppy.html
 
 =====
 PREPARATION STEPS
