@@ -109,16 +109,6 @@ Finally, you can run guppy to get all sorts of cool statistics and graphs! Some 
 
 **STEP 6: Convert guppy output to R format (optional)**
 
-As mentioned above, many statistical operations can be perfomed within Guppy. However, if you wish to read he files kr.csv or unifrac.csv into R, some post-processing is needed. For the time being, this consists of a manual step and one automatic.
+As mentioned above, many statistical operations can be perfomed within Guppy. However, if you wish to read he files kr.csv or unifrac.csv into R, some post-processing is needed to convert these space-separated awkward files into tab-separated symmetric distance matrices. This can be done with the following script, written in Python 3:
 
-The manual part:
-
- 1. Open the files into a text editor and replace all cases of "  " (2 spaces in a row) with a single one until there's none left
- 
- 2. Remove all trailing spaces in the beginning and end of lines
- 
- 3. Replace all spaces for tabs
- 
-The automated part is done by the make_dist_mat.py script:
-
- $ make_dist_mat.py -i unifrac.csv > unifrac4R.tsv
+ $ convert_guppy_output.py -o kr4R.tsv kr.csv
