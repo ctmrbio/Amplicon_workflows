@@ -10,4 +10,4 @@ Amplicons_no-overlap does the same for the case where the reads don't (or rarely
 
 Quick_picrust helps you prepare your data for [picrust](http://picrust.github.io/picrust/) analysis if you absolutely refuse to use Qiime or Mothur.
 
-Convert_to_phylogeny is a guide to calculating Unifrac like statistics from your OTU table **coming soon**
+Convert_to_phylogeny is a guide to calculating Unifrac like statistics from your OTU table.
