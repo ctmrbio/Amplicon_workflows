@@ -29,11 +29,40 @@ These steps will only need to be run once for every reference library.
 
 **STEP 1: Select your sequences of interest**
 
-**STEP 2: Remove duplicated sequences**
+Select from an apropriate database (such as the latest Silva_ or PR2_ releases) sequences appropriate to your environment of interest. For example, if your primers only amplify bacterial DNA, removing archaeal and eukaryotic sequences from the DB will save you a lot of time. If you have a list of sequence ID:s, you can use the script select_sample.pl to extract them from a Fasta file. Unless you're planning on working on a very small subset, I recommend starting from a pre-aligned database.
+
+.. _Silva: https://www.arb-silva.de/no_cache/download/archive/
+.. _PR2: https://figshare.com/articles/PR2_rRNA_gene_database/3803709
+
+**STEP 2: Remove excessive gaps and duplicated sequences**
+
+If your reference database was unaligned, now you need to align it. I recommend ClustalO for that task.
+
+Otherwise, since only a subset of sequences were selected, there are now positions which are entirely gapped, and that's no good. You can also save time by removing sequences that are *mostly* gaps, since they are usually found at the edges of the alignment and are not particularly informative. One way to do this is with the following script from the DegePrime suite:
+
+ $ perl TrimAlignment.pl -i <infile> -o <infile>.trim.fasta -min 0.3 -trailgap
+
+This will only keep positions where at least 30% of the sequences have a base, not a gap.
+
+Now that this is done, you've probably ended up with some identical sequences, since they only differed by a few trailing bases. This will make tree building very slow, so we remove it with SeqMagick:
+
+ $ seqmagick mogrify --deduplicate-sequences <infile>.trim.fasta
+
+Note that mogrify converts the file *in place*. If you want to keep both files, use convert instead of mogrify.
 
 **STEP 3: Build a phylogenetic tree**
 
+Now we can build a reference tree of our selected sequences! For this use case, speed is a primary concern, so we use FastTree in its fastest mode:
+
+ $ FastTree -nt -gtr -log TREE.log -fastest <infile>.trim.fasta > <infile>.trim.nwk 
+
+This will take quite a bit of memory and probably > 24h
+
 **STEP 4: Create a reference package**
+
+The only thing left to do is organise the information in a helpful way for Pplacer! This should take less than an hour and requires biopython to be installed and available:
+
+ $ taxit create -l <gene used> -P <name for the new package> --aln-fasta <infile>.trim.fasta --tree-stats TREE.log  --tree-file <infile>.trim.nwk --stats-type FastTree -a <your name>  
 
 
 =====
