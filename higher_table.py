@@ -10,7 +10,7 @@ import csv
 import re
 
 def read_table(intable, taxfield, depth, first, last):
-	taxdict = defaultdict(dict)
+	taxdict = defaultdict(lambda: defaultdict(int))
 	with open(intable) as csvfile:
 		reader = csv.reader(csvfile, delimiter="\t")
 		header = next(reader)[first:last]
@@ -19,7 +19,7 @@ def read_table(intable, taxfield, depth, first, last):
 			tax = row[taxfield].split(";")
 			tax = ";".join(tax[0:depth])
 			for i in range(len(header)):
-				taxdict[tax][header[i]] = counts[i]
+				taxdict[tax][header[i]] += int(counts[i])
 	return(header, taxdict)
 		
 def print_tab(header, counts):
@@ -27,7 +27,7 @@ def print_tab(header, counts):
 	for taxon, line in counts.iteritems():
 		out = taxon
 		for sample in header:
-			out = out + "\t" + line[sample]
+			out = out + "\t" + str(line[sample])
 		print(out)
 
 def main(intable, depth, taxfield,  first, last):
