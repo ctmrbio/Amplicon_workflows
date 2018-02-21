@@ -73,7 +73,7 @@ Example:
 
 
 **STEP 6: OTU picking**
-	This is the step where Usearch v.9 or above is really necessary. Instead of clustering OTU at any fixed percentage similarity, this will consider both the quality of the bases and the abundance of the reads to calculate the probability that an unique sequence is simply a faulty version of another, and then assign them to the same OTU. This gives good resolution for closely related species while not inflating the alpha-diversity. While other softwares exist that have similar approaches, unoise is by far the fastest.
+	This is the step where Usearch v.9 or above is really necessary. Instead of clustering OTU at any fixed percentage similarity, this will consider both the relative abundance of the reads and the Hamming distance between them to calculate the probability that an unique sequence is simply a faulty version of another, and then assign them to the same OTU. This gives good resolution for closely related species while not inflating the alpha-diversity. While other softwares exist that have similar approaches (eg `DADA2 <https://benjjneb.github.io/dada2/tutorial.html>`_), unoise is fastest.
 
 The command:
 
@@ -81,7 +81,7 @@ The command:
 	
 Example:
 
-	usearch9 -unoise uniques.fa -fastaout centroids.fa -minampsize 2
+	usearch -unoise uniques.fa -fastaout centroids.fa -minampsize 2
 
 **STEP 7: Assigning reads to OTU**
 	We will now look at each of our merged fastq files and assign them to OTU. At this point, take the opportunity to make a directory just for your new cluster files. This is important downstream. You're also requested to say how similar your sample must be to the centroid. This must be compatible with the similarity you used for clustering.
