@@ -32,8 +32,10 @@ This will only need to be done once.
 
 `SILVA Nr99 132 SSU database
 <https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_SSURef_Nr99_tax_silva_trunc.fasta.gz>`_
-`Auxilary file <>`_
-`Clean-up script <>`_
+
+`Auxilary file <https://github.com/ctmrbio/Amplicon_workflows/blob/master/contaminating_seqs.tsv>`_
+
+`Clean-up script <https://github.com/ctmrbio/Amplicon_workflows/blob/master/clean_silva.py>`_
 
 ** 2. Select only the taxonomy **
 
