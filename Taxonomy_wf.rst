@@ -10,16 +10,11 @@ Therefore, `we <https://scholar.google.com/citations?user=7JXgYtsAAAAJ&hl=en>`_ 
 situation by removing non-informative annotations. Before you proceed, please be aware of the following caveats:
 
 * This work is essentially driven by a single person, and is bound to have some errors and omissions
-* The Eukaryotic taxonomy isn't affected by the procedures described here. Feel free to develop a similar approach 
-for Eukaryotes if this is within your expertise, or consider `specialised databases <http://eukref.org/databases/>`_
-* The clean-up script is developed and tested for SILVA v.132, and will not perform as well with earlier or later versions. 
-It should however not be hard to adapt it.
+* The Eukaryotic taxonomy isn't affected by the procedures described here. Feel free to develop a similar approach for Eukaryotes if this is within your expertise, or consider `specialised databases <http://eukref.org/databases/>`_
+* The clean-up script is developed and tested for SILVA v.132, and will not perform as well with earlier or later versions. It should however not be hard to adapt it.
 * Only minimal changes have been done to Cyanobacteria and Enterobacteriaceae, since these clades are notably messy
-* Generally, a species-level annotation is only removed if it conflicts with a order-level annotation or higher. 
-If the order is correct, but the family or genus are in conflict with the species, we don't see 16S evidence as strong
-enough alone to overrule the work of the original researchers.
-* While species and sometimes strain-level annotations are kept in the database, please use your critical thinking skills.
-300 bp of a single gene will never afford you strain-level resolution. 
+* Generally, a species-level annotation is only removed if it conflicts with a order-level annotation or higher. If the order is correct, but the family or genus are in conflict with the species, we don't see 16S evidence as strong enough alone to overrule the work of the original researchers.
+* While species and sometimes strain-level annotations are kept in the database, please use your critical thinking skills. 300 bp of a single gene will never afford you strain-level resolution. 
 * Feel free to open an issue if you believe further curation is needed to the final taxonomy.
 * Feel free to make a pull request speeding up the current scripts.
 
