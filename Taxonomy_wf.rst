@@ -52,3 +52,30 @@ The following steps were developed by `Yue O.O. Hu <https://scholar.google.se/ci
 taxonomy based on the `PR2 <https://figshare.com/articles/Protist_Ribosomal_Reference_database_PR2_-_SSU_rRNA_gene_database/5913181>`_
 database and were extended by `Luisa W. Hugerth <https://scholar.google.com/citations?user=7JXgYtsAAAAJ&hl=en>`_ 
 to its current 16S/SILVA-based format.
+
+
+
+** 1: Mapping OTU to a curated database**
+
+Use vsearch or a similar tool to map your amplicons to the database as fast as Usearch would, but produce a blast-like output.
+
+Example:
+
+    vsearch --usearch_global centroids.fa -db SILVA_132_SSURef_Nr99_tax_silva_trunc.fasta --blast6out centroids2silva.blast --id 0.9 --maxaccepts 45
+
+** 2. Parse the taxonomy **
+
+The trick here is that we'll parse the same mapping result att diferent levels of similarity and keep the best classification possible for the level of similarity found. The similarity levels presented here work well in our experience, but they're not universal for all clades. Specific research questions might require optimizing them.
+
+The script was originally meant for unmerged reads, therefore the -1 and -2 flags. Just repeat the same input file twice if reads were merged.
+
+Example:
+
+    SIMS=(90 95 97 99 100) for sim in ${SIMS[@]}; do
+
+        python taxonomy_blast_parser.py -1 centroids2silva.blast -2 centroids2silva.blast -id $sim -tax silva_128_Nr99_no-euk_curated.tsv -l1 350 -l2 350 > parse.${sim}.out
+
+    done
+
+    python combine_taxonomy.py -i parse.100.out,parse.99.out,parse.97.out,parse.95.out,parse.90.out -n strain,species,genus,class,phylum -d 8,7,6,3,2 > taxonomy.out
+
