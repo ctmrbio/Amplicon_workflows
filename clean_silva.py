@@ -7,7 +7,7 @@ import argparse
 import csv
 import re
 
-keywords = set([
+keywords = set([re.compile(kw) for kw in [
 ";metagenome", ";uncultured", ";Uncultured", ";unidentified", ";enrichment", "_environmental_sample", ";clone",
 ";environmental_clone", "_culture_clone", "_clone", ";bacterium", ";Terrestrial", ";terrestrial", ";seawater", ";groundwater", 
 ";marine", ";low_G", ";blackwater", ";freshwater", ";saltmarsh", ";hyperthermophilic", ";iron-reducing", ";Acidobacterium",
@@ -56,10 +56,29 @@ keywords = set([
 ";haloarchaeon", ";archaeon", "_archaeon", ";hydrocarbon_", ";wastewater", ";permafrost", ";compost_", "_canine_", ";korarchaeote",
 ";Bacteroidetes_sp", "Flavobacterium-like", ";unclassified", ";Sphingobacterium-like", "bacter;Flavobacterium", ";epibiont", ";Alviniconcha",
 ";artificial", ";anammox", ";anoxic", ";planctomycete", ";star", ";gas", ";Phage", ";diazotroph", ";humic", ";food", ";mollusc", ";deep", ";rod-"
-])
+]])
 
 
 isproblem = re.compile(";arsenic_resistant|water|;Raricirrus_beryli|;filamentous_|_bacterium|;bacterium|;rape_rhizosphere|;SAR116_cluster_alpha|;secondary|;rainbow_trout|;SAR202_cluster|;glacier_|methanogenic|_proteobacterium|;proteobacterium|clone|;swine_|;subglacial_outflow|_group|;midgut|rctic|endosymbio|;Eubostrichus_topiarius|;type_I|;Catanema_sp.|;cilia-associated_respiratory|;low_G|;denitrifying_|;unidentified|;SAR86_cluster|;Laxus_cosmopolitus|;SAR324_cluster|;human_|;Iron_sulfide-containing|;mixed_culture|;glacial_ice|;Robbea_sp.|;Bacterium_BAB|;sulfidic_hot|;marine|;Microgenomates_|;Citrus_greening|;Gram-|;halophilic_|_Sea|;Parcubacteria_|errestrial|;candidate_division|;iron-reducing|;Kartchner_Caverns|;blood_disease|-like|;methylotrophic_;Siboglinum_sp.|metagenome|;Omnitrophica_WOR|;psychrophilic_|;spirochete|;poultry_manure|;Folliculinopsis_sp._SKG-2010a|_sea|-sea|;hyperthermophilic|_environmental_sample|;dissimilatory_selenate-respiring|;saltmarsh|;methanotrophic_|;Stilbonema_sp.|biont|;enrichment|;mixotrophic_iron-oxidizing|;arsenite-oxid|;unknown_marine_alpha|;primary|;lactic_acid|soil|;SAR11_cluster|;dehydroabietic_acid-degrading|;thermophilic_|;chironomid_egg|;arsenic-oxid|;lobster_gut|;anaerobic_|cultured|;obligately_oligotrophic|;uncultivated|sp\.|;actino|str\.|pv\.|;gut|archaeo|cf\.|aff\.|_gen|;eubacterium|;synthetic|Bacteriodetes|unclassified|;artificial|;planctomycete|;gas|;Phage|;beta|;humic")
+marker1 = re.compile(";[A-Z][a-z]+(eae|ales|proteobacteria)_(str|sp|pv|subsp|genomosp|gen)\.")
+marker2 = re.compile(";[A-Z][a-z]+(eae|ales|proteobacteria|archaeota)_(bacterium|archaeon)")
+prok_re = re.compile("^Archaea;|^Bacteria;")
+search_acillus_strep = re.compile("((Lactob|B)acillus|Streptococcus)_")
+search_Bacilli= re.compile("Bacilli")
+search_Vibrio = re.compile("(Vibrio_)")
+search_Vibrionales = re.compile("Vibrionales")
+search_Clostridium = re.compile("(Clostridium_)")
+search_Clostridiales = re.compile("Clostridiales")
+search_Mycobacterium = re.compile("(Mycobacterium_)")
+search_Corynebacteriales = re.compile("Corynebacteriales")
+search_Pseudomonas = re.compile("(Pseudomonas_)")
+search_Pseudomonadales = re.compile("Pseudomonadales")
+sub1_re = re.compile("(_subsp\._|_genomosp\._|_sp\._|_str\._|_pv\._|_aff\._|cf\._|_gen\._)")
+sub2_re = re.compile("_sp\.")
+search_Candidatus = re.compile("Candidatus_[A-Za-z]+_[A-Za-z]+_")
+search_Candidatus2 = re.compile("Candidatus_[A-Za-z]+_[A-Za-z]+(_)")
+search_AZ1 = re.compile(";[A-Za-z]+_[A-Za-z]+_")
+search_AZ2 = re.compile("[A-Za-z]+_[A-Za-z]+(_)")
 
 
 def writetab(tab, handle):
@@ -76,7 +95,7 @@ def cleantab(tab, aux):
 			ID = row[0]
 			tax = row[1]
 			#print(tax)
-			prok = re.search("^Archaea;|^Bacteria;", tax)
+			prok = re.search(prok_re, tax)
 			if(prok != None):
 				if(tax in aux):
 					tax = aux[tax]
@@ -86,33 +105,33 @@ def cleantab(tab, aux):
 					tax = tax.replace("[", "")
 					#print(tax)
 					##First search for very frequently misasigned clades
-					search = re.search("((Lactob|B)acillus|Streptococcus)_", tax)
+					search = re.search(search_acillus_strep, tax)
 					if(search != None):
-						search = re.search("Bacilli", tax)
+						search = re.search(search_Bacilli, tax)
 						if(search == None):
 							tax = ";".join(tax.split(";")[0:6])
 					else:
-						search = re.search("(Vibrio_)", tax)
+						search = re.search(search_Vibrio, tax)
 						if(search != None):
-							search = re.search("Vibrionales", tax)
+							search = re.search(search_Vibrionales, tax)
 							if(search == None):
 								tax = ";".join(tax.split(";")[0:6])
 						else:
-							search = re.search("(Clostridium_)", tax)
+							search = re.search(search_Clostridium, tax)
 							if(search != None):
-								search = re.search("Clostridiales", tax)
+								search = re.search(search_Clostridiales, tax)
 								if(search == None):
 									tax = ";".join(tax.split(";")[0:6])
 							else:
-								search = re.search("(Mycobacterium_)", tax)
+								search = re.search(search_Mycobacterium, tax)
 								if(search != None):
-									search = re.search("Corynebacteriales", tax)
+									search = re.search(search_Corynebacteriales, tax)
 									if(search == None):
 										tax = ";".join(tax.split(";")[0:6])
 								else:
-									search = re.search("(Pseudomonas_)", tax)
+									search = re.search(search_Pseudomonas, tax)
 									if(search != None):
-										search = re.search("Pseudomonadales", tax)
+										search = re.search(search_Pseudomonadales, tax)
 										if(search == None):
 											tax = ";".join(tax.split(";")[0:6])
 					#print(tax)
@@ -121,27 +140,25 @@ def cleantab(tab, aux):
 						for item in keywords:
 							search = re.search(item, tax)
 							if(search != None):
-								tax = tax.split(item)[0]
+								tax = tax.split(item.pattern)[0]
 						#print("Got a problem")
-						marker=re.compile(";[A-Z][a-z]+(eae|ales|proteobacteria)_(str|sp|pv|subsp|genomosp|gen)\.")
-						prob = re.search(marker, tax)
+						prob = re.search(marker1, tax)
 						if(prob != None):
 							tax = ";".join(tax.split(";")[0:6])
 						else:
-							marker=re.compile(";[A-Z][a-z]+(eae|ales|proteobacteria|archaeota)_(bacterium|archaeon)")
-							prob = re.search(marker, tax)
+							prob = re.search(marker2, tax)
 							if(prob != None):
 								tax = ";".join(tax.split(";")[0:6])
 							else:
-								tax = re.sub("(_subsp\._|_genomosp\._|_sp\._|_str\._|_pv\._|_aff\._|cf\._|_gen\._)", ";", tax)
-								tax = re.sub("_sp\.", ";", tax)
-					search = re.search("Candidatus_[A-Za-z]+_[A-Za-z]+_", tax)
+								tax = re.sub(sub1_re, ";", tax)
+								tax = re.sub(sub2_re, ";", tax)
+					search = re.search(search_Candidatus, tax)
 					if(search != None):
-						tax=re.sub("Candidatus_[A-Za-z]+_[A-Za-z]+(_)", ";", tax)
+						tax = re.sub(search_Candidatus2, ";", tax)
 					else:
-						search = re.search(";[A-Za-z]+_[A-Za-z]+_", tax)
+						search = re.search(search_AZ1, tax)
 						if(search != None):
-							tax=re.sub("[A-Za-z]+_[A-Za-z]+(_)", ";", tax)
+							tax=re.sub(search_AZ2, ";", tax)
 					#print(tax)
 				tax = tax.split(";;")[0]
 			output[ID] = tax
