@@ -1,11 +1,16 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
-"""clean_silva.py: creates a custom-made version of SILVA's 132 taxonomy DB for Archaea and Bacteria
+"""Create a custom-made version of SILVA's 132 taxonomy DB for Archaea and Bacteria
 """
+__author__ = "Luisa Hugerth, Fredrik Boulund"
+__date__ = "2018"
 
 import argparse
 import csv
 import re
+from sys import argv, exit
+from multiprocessing import Pool
+from functools import partial
 
 keywords = set([re.compile(kw) for kw in [
 ";metagenome", ";uncultured", ";Uncultured", ";unidentified", ";enrichment", "_environmental_sample", ";clone",
@@ -87,82 +92,89 @@ def writetab(tab, handle):
 		line = key+"\t"+value+"\n"
 		out.write(line)
 
-def cleantab(tab, aux):
-	output = dict()
-	with open(tab) as csvfile:
-		reader = csv.reader(csvfile, delimiter="\t")
-		for row in reader:
-			ID = row[0]
-			tax = row[1]
-			#print(tax)
-			prok = re.search(prok_re, tax)
-			if(prok != None):
-				if(tax in aux):
-					tax = aux[tax]
-				else:
-					tax = tax.replace("'", "")
-					tax = tax.replace("]", "")
-					tax = tax.replace("[", "")
-					#print(tax)
-					##First search for very frequently misasigned clades
-					search = re.search(search_acillus_strep, tax)
-					if(search != None):
-						search = re.search(search_Bacilli, tax)
-						if(search == None):
-							tax = ";".join(tax.split(";")[0:6])
-					else:
-						search = re.search(search_Vibrio, tax)
-						if(search != None):
-							search = re.search(search_Vibrionales, tax)
-							if(search == None):
-								tax = ";".join(tax.split(";")[0:6])
-						else:
-							search = re.search(search_Clostridium, tax)
-							if(search != None):
-								search = re.search(search_Clostridiales, tax)
-								if(search == None):
-									tax = ";".join(tax.split(";")[0:6])
-							else:
-								search = re.search(search_Mycobacterium, tax)
-								if(search != None):
-									search = re.search(search_Corynebacteriales, tax)
-									if(search == None):
-										tax = ";".join(tax.split(";")[0:6])
-								else:
-									search = re.search(search_Pseudomonas, tax)
-									if(search != None):
-										search = re.search(search_Pseudomonadales, tax)
-										if(search == None):
-											tax = ";".join(tax.split(";")[0:6])
-					#print(tax)
-					prob = re.search(isproblem, tax)
-					if(prob != None):
-						for item in keywords:
-							search = re.search(item, tax)
-							if(search != None):
-								tax = tax.split(item.pattern)[0]
-						#print("Got a problem")
-						prob = re.search(marker1, tax)
-						if(prob != None):
-							tax = ";".join(tax.split(";")[0:6])
-						else:
-							prob = re.search(marker2, tax)
-							if(prob != None):
-								tax = ";".join(tax.split(";")[0:6])
-							else:
-								tax = re.sub(sub1_re, ";", tax)
-								tax = re.sub(sub2_re, ";", tax)
-					search = re.search(search_Candidatus, tax)
-					if(search != None):
-						tax = re.sub(search_Candidatus2, ";", tax)
-					else:
-						search = re.search(search_AZ1, tax)
-						if(search != None):
-							tax=re.sub(search_AZ2, ";", tax)
-					#print(tax)
-				tax = tax.split(";;")[0]
-			output[ID] = tax
-	return(output)
+
+def process_row(aux, row):
+    ID = row[0]
+    tax = row[1]
+    #print(tax)
+    prok = re.search(prok_re, tax)
+    if(prok != None):
+        if(tax in aux):
+            tax = aux[tax]
+        else:
+            tax = tax.replace("'", "")
+            tax = tax.replace("]", "")
+            tax = tax.replace("[", "")
+            #print(tax)
+            ##First search for very frequently misasigned clades
+            search = re.search(search_acillus_strep, tax)
+            if(search != None):
+                search = re.search(search_Bacilli, tax)
+                if(search == None):
+                    tax = ";".join(tax.split(";")[0:6])
+            else:
+                search = re.search(search_Vibrio, tax)
+                if(search != None):
+                    search = re.search(search_Vibrionales, tax)
+                    if(search == None):
+                        tax = ";".join(tax.split(";")[0:6])
+                else:
+                    search = re.search(search_Clostridium, tax)
+                    if(search != None):
+                        search = re.search(search_Clostridiales, tax)
+                        if(search == None):
+                            tax = ";".join(tax.split(";")[0:6])
+                    else:
+                        search = re.search(search_Mycobacterium, tax)
+                        if(search != None):
+                            search = re.search(search_Corynebacteriales, tax)
+                            if(search == None):
+                                tax = ";".join(tax.split(";")[0:6])
+                        else:
+                            search = re.search(search_Pseudomonas, tax)
+                            if(search != None):
+                                search = re.search(search_Pseudomonadales, tax)
+                                if(search == None):
+                                    tax = ";".join(tax.split(";")[0:6])
+            #print(tax)
+            prob = re.search(isproblem, tax)
+            if(prob != None):
+                for item in keywords:
+                    search = re.search(item, tax)
+                    if(search != None):
+                        tax = tax.split(item.pattern)[0]
+                #print("Got a problem")
+                prob = re.search(marker1, tax)
+                if(prob != None):
+                    tax = ";".join(tax.split(";")[0:6])
+                else:
+                    prob = re.search(marker2, tax)
+                    if(prob != None):
+                        tax = ";".join(tax.split(";")[0:6])
+                    else:
+                        tax = re.sub(sub1_re, ";", tax)
+                        tax = re.sub(sub2_re, ";", tax)
+            search = re.search(search_Candidatus, tax)
+            if(search != None):
+                tax = re.sub(search_Candidatus2, ";", tax)
+            else:
+                search = re.search(search_AZ1, tax)
+                if(search != None):
+                    tax = re.sub(search_AZ2, ";", tax)
+            #print(tax)
+        tax = tax.split(";;")[0]
+    return ID, tax
+
+
+def cleantab(tab, aux, cpus):
+    csv_file = open(tab)
+    reader = csv.reader(csv_file, delimiter="\t")
+    pool = Pool(cpus)
+    process_row_aux = partial(process_row, aux)
+    fixed_ids = pool.map(process_row_aux, reader)
+    csv_file.close()
+    output = {ID_tax[0]: ID_tax[1] for ID_tax in fixed_ids if ID_tax}
+    return(output)
 					
 
 def readaux(tab):
@@ -174,17 +186,29 @@ def readaux(tab):
 	return(replace)
 
 
-def main(intable, auxtable, outtable):
+def main(intable, auxtable, outtable, cpus):
 	replacements = readaux(auxtable)
-	newtab = cleantab(intable, replacements)
+	newtab = cleantab(intable, replacements, cpus)
 	writetab(newtab, outtable)
 
 if __name__ == '__main__':
-	parser = argparse.ArgumentParser(description='Creates a manually curated version of the SILVA 132 taxonomy')
-	parser.add_argument('-i', '--intable', help='TSV table with id:s on the first column and taxonomy on the right')
-	parser.add_argument('-a', '--auxtable', help='Table with particular taxa that need to be trimmed')
-	parser.add_argument('-o', '--outtable', help='Output table with id:s on the first column and curated taxonomy on the right')
+	parser = argparse.ArgumentParser(description=__doc__)
+	parser.add_argument('-i', '--intable',
+			help='TSV table with id:s on the first column and taxonomy on the right')
+	parser.add_argument('-a', '--auxtable',
+			help='Table with particular taxa that need to be trimmed')
+	parser.add_argument('-o', '--outtable',
+			help='Output table with id:s on the first column and curated taxonomy on the right')
+	parser.add_argument('-n', '--cpus',
+			type=int,
+			default=1,
+			help='Number of parallel processes to run. '
+				 'Note that running in parallel might make output unordered [%(default)s].')
+
+	if len(argv) < 2:
+		parser.print_help()
+		exit(1)
 
 	args = parser.parse_args()
 	
-	main(args.intable, args.auxtable, args.outtable)
+	main(args.intable, args.auxtable, args.outtable, args.cpus)
