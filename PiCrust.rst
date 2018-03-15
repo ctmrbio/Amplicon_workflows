@@ -42,7 +42,7 @@ It's important to have a directory only for the mapping results.
  
   perl /home/luisah/Tutorials/otu_tables --classifier=tsv --samples=maps --classification=matched_tax.tsv --sequences=gg_matched.fa > full_table.tsv
   
-  awk '{for(i=0;++i<NF-2;)printf $i"\t";print $(NF-2)}'  full_table.tsv > pi_table.tsv
+  awk '{for(i=0;++i<NF-2;)printf $i"\\t";print $(NF-2)}'  full_table.tsv > pi_table.tsv
 
 **STEP 4: Run Picrust**
 
