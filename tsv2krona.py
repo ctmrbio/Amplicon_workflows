@@ -22,10 +22,10 @@ def parse_tab(infile, field1, fieldZ, taxfield):
 			if (int(fieldZ) == -1):
 				fieldZ = len(row)
 			if row[0][0] != '#':
-				line = map(int, row[field1:fieldZ+1])
+				line = list(map(int, row[field1:fieldZ+1]))
 				tax = row[taxfield]
 				if (tax in count_dict):
-					count_dict[tax] = map(add, count_dict[tax], line)
+					count_dict[tax] = list(map(add, count_dict[tax], line))
 				else:
 					count_dict[tax] = line
 			else:
@@ -39,9 +39,9 @@ def printer(table, prefix, names):
 	while (i<fileno):
 		filename = ".".join([prefix, names[i], "out"])
 		f = open(filename, 'w')
-		print "Printing file no." + str(i+1)
-		for tax, counts in table.iteritems():
-			if counts[i] > 0:
+		print("Printing file no." + str(i+1))
+		for tax, counts in table.items():	##was .iteritems
+			if counts[i] > 0:		## 'map' object is not subsettable
 				tax = tax.replace(";", "\t")
 				tax = tax.replace('"', '')
 				line = "\t".join([str(counts[i]), tax, "\n"])
