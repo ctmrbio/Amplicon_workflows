@@ -78,6 +78,8 @@ search_Mycobacterium = re.compile("(Mycobacterium_)")
 search_Corynebacteriales = re.compile("Corynebacteriales")
 search_Pseudomonas = re.compile("(Pseudomonas_)")
 search_Pseudomonadales = re.compile("Pseudomonadales")
+search_Eubacterium = re.compile("Eubacterium")
+search_Eubacteriaceae = re.compile("Eubacteriaceae")
 sub1_re = re.compile("(_subsp\._|_genomosp\._|_sp\._|_str\._|_pv\._|_aff\._|cf\._|_gen\._)")
 sub2_re = re.compile("_sp\.")
 search_Candidatus = re.compile("Candidatus_[A-Za-z]+_[A-Za-z]+_")
@@ -105,7 +107,6 @@ def process_row(aux, row):
             tax = tax.replace("'", "")
             tax = tax.replace("]", "")
             tax = tax.replace("[", "")
-            #print(tax)
             ##First search for very frequently misasigned clades
             search = re.search(search_acillus_strep, tax)
             if(search != None):
@@ -136,14 +137,18 @@ def process_row(aux, row):
                                 search = re.search(search_Pseudomonadales, tax)
                                 if(search == None):
                                     tax = ";".join(tax.split(";")[0:6])
-            #print(tax)
+                            else:
+                                search = re.search(search_Eubacterium, tax)
+                                if(search == None):
+                                    search = re.search(search_Eubacteriaceae, tax)
+                                    if(search == None):
+                                        tax = ";".join(tax.split(";")[0:6])
             prob = re.search(isproblem, tax)
             if(prob != None):
                 for item in keywords:
                     search = re.search(item, tax)
                     if(search != None):
                         tax = tax.split(item.pattern)[0]
-                #print("Got a problem")
                 prob = re.search(marker1, tax)
                 if(prob != None):
                     tax = ";".join(tax.split(";")[0:6])
