@@ -38,9 +38,9 @@ It's important to have a directory only for the mapping results.
 
   grep '^>' gg_matched.fa > matched.tsv
   
-  perl /home/luisah/amplicons/extract_sample.pl --sample=matched.tsv --database=$DB/parse_db/99_otu_tax.tsv --type=tsv > matched_tax.tsv
+ perl ~/Amplicon_workflows/scripts/select_sample.pl --sample=matched.tsv --database=$DB/gg_13_5_otus/taxonomy/99_otu_taxonomy.txt --type=tsv > matched_tax.tsv
  
-  perl /home/luisah/Tutorials/otu_tables --classifier=tsv --samples=maps --classification=matched_tax.tsv --sequences=gg_matched.fa > full_table.tsv
+  perl ~/Amplicon_workflows/scripts/make_otu_tables.pl --classifier=tsv --samples=maps --classification=matched_tax.tsv --sequences=gg_matched.fa > full_table.tsv
   
   awk '{for(i=0;++i<NF-2;)printf $i"\\t";print $(NF-2)}'  full_table.tsv > pi_table.tsv
 
